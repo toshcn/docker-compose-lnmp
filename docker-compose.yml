@@ -1,0 +1,78 @@
+version: "3.7"
+services:
+  ### Nginx Web Container #######################################
+  nginx:
+#   image: registry.cn-shenzhen.aliyuncs.com/toshcn/alpine-nginx
+    image: registry.cn-shenzhen.aliyuncs.com/toshcn/alpine-nginx-brotli
+#   container_name: alpine-nginx
+    container_name: alpine-nginx-brotli
+    ports:
+      - "80:80"
+      - "443:443"
+    #source code container
+    volumes:
+      - "./rootfs/etc/nginx/conf.d:/etc/nginx/conf.d"
+      - "./rootfs/www:/usr/local/nginx/html"
+      - "./rootfs/var/log/nginx:/var/log/nginx"
+      - "./rootfs/var/run:/var/run"
+      - "./rootfs/etc/nginx/nginx.conf:/etc/nginx/nginx.conf"
+    links:
+      - php-fpm:php-fpm
+    networks:
+      web_server_network:
+        ipv4_address: ${NGINX_WEB_SERVER_IP}
+
+  ### PHP-FPM Container #######################################
+  php-fpm:
+    image: registry.cn-shenzhen.aliyuncs.com/toshcn/alpine-php
+    container_name: alpine-php
+    volumes:
+      - "./rootfs/www:/usr/local/nginx/html"
+      - "./rootfs/var/log/php:/var/log/php"
+      - "./rootfs/var/run:/var/run"
+      - "./rootfs/etc/php/${PHP_MAIN_VERSION}/php.ini:/etc/php/${PHP_MAIN_VERSION}/php.ini"
+      - "./rootfs/etc/php/${PHP_MAIN_VERSION}/php-fpm.conf:/etc/php/${PHP_MAIN_VERSION}/php-fpm.conf"
+      - "./rootfs/etc/php/${PHP_MAIN_VERSION}/php-fpm.d/www.conf:/etc/php/${PHP_MAIN_VERSION}/php-fpm.d/www.conf"
+    links:
+      - mariadb
+    #  - redis
+    #https://github.com/laradock/laradock/issues/435
+    extra_hosts:
+      - "${PHP_FPM_DOMAIN}:${NGINX_WEB_SERVER_IP}"
+      - "${PHP_FPM_DOMAIN2}:${NGINX_WEB_SERVER_IP}"
+      - "${PHP_FPM_DOMAIN3}:${NGINX_WEB_SERVER_IP}"
+      - "${PHP_FPM_DOMAIN4}:${NGINX_WEB_SERVER_IP}"
+      - "${PHP_FPM_DOMAIN5}:${NGINX_WEB_SERVER_IP}"
+      - "${PHP_FPM_DOMAIN6}:${NGINX_WEB_SERVER_IP}"
+    env_file:
+      - .env
+    networks:
+      - web_server_network
+
+### MariaDB Container #######################################
+  # MariaDB - One of the most popular database servers. Made by the original developers of MySQL. Guaranteed to stay open source.
+  mariadb:
+    image: mariadb:10.2
+    container_name: mariadb
+    ports:
+      - "3306:3306"
+    volumes:
+      # NOTE: your data will be stored in ./mysql
+      - "./rootfs/mariadb/data/mysql:/var/lib/mysql"
+    environment:
+      - MYSQL_DATABASE=mysql
+      - MYSQL_USER=developer
+      - MYSQL_PASSWORD=123456
+      - MYSQL_ROOT_PASSWORD=201314
+    networks:
+      - web_server_network
+
+### Networks Setup ############################################
+networks:
+  web_server_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: "${WEB_SERVER_SUBNET}"
+#        gateway: "${WEB_SERVER_GATEWAY}"
