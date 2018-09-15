@@ -44,7 +44,7 @@ sudo systemctl restart docker
 ## Mariadb 初始密码，docker-compose.yml中配置
   用户：密码
   developer：123456
-  ROOT：201314
+  root：201314
 
 ## Install安装
  1. 克隆Git仓库。需要提前安装好Git。
