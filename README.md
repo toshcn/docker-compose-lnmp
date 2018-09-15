@@ -144,6 +144,14 @@ server {
 ```shell
 sudo docker-compose up -d
 ```
+ 5. 配置本地主机host文件
+```shell
+sudo vim /etc/hosts
+#添加域名解析
+127.0.0.1 default.my
+127.0.0.1 default-php.my
+```
+ 6. 访问 default.my 为html/default目录, default-php.my为html/default-php目录
 
 ## 其他说明
 docker 常用命令
